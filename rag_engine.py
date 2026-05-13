@@ -1,13 +1,20 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
 
-from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
+from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+from langchain_community.document_loaders import (
+    PyPDFLoader,
+    Docx2txtLoader,
+    TextLoader
+)
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings       # ← new
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
@@ -17,7 +24,10 @@ load_dotenv()
 
 CHROMA_DIR = "./chroma_store"
 
-# Free local embeddings — downloads once (~90MB), then cached
+
+# ─────────────────────────────────────────────
+# Embeddings (stable + free)
+# ─────────────────────────────────────────────
 def get_embeddings():
     return HuggingFaceEmbeddings(
         model_name="all-MiniLM-L6-v2",
@@ -26,8 +36,12 @@ def get_embeddings():
     )
 
 
+# ─────────────────────────────────────────────
+# Document loader
+# ─────────────────────────────────────────────
 def load_document(file_path: str, source_name: str) -> list[Document]:
     ext = Path(file_path).suffix.lower()
+
     if ext == ".pdf":
         loader = PyPDFLoader(file_path)
     elif ext == ".docx":
@@ -38,66 +52,87 @@ def load_document(file_path: str, source_name: str) -> list[Document]:
         raise ValueError(f"Unsupported file type: {ext}")
 
     docs = loader.load()
+
     for doc in docs:
         doc.metadata["source_name"] = source_name
+
     return docs
 
 
+# ─────────────────────────────────────────────
+# Vector store (FIXED)
+# ─────────────────────────────────────────────
 def build_vectorstore(documents: list[Document]):
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
-        chunk_overlap=150,
-        separators=["\n\n", "\n", ". ", " ", ""]
+        chunk_overlap=150
     )
+
     chunks = splitter.split_documents(documents)
+
+    embeddings = get_embeddings()
 
     vectorstore = Chroma.from_documents(
         documents=chunks,
-        embedding=get_embeddings(),
+        embedding_function=embeddings,   # ✅ FIXED (IMPORTANT)
         persist_directory=CHROMA_DIR
     )
+
     return vectorstore
 
 
+# ─────────────────────────────────────────────
+# Load existing DB
+# ─────────────────────────────────────────────
 def load_existing_vectorstore():
     if not Path(CHROMA_DIR).exists():
         return None
-    return Chroma(persist_directory=CHROMA_DIR, embedding_function=get_embeddings())
 
-
-def build_rag_chain(vectorstore):
-   llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    api_key=os.getenv("GROQ_API_KEY"),
-    temperature=0.3
+    return Chroma(
+        persist_directory=CHROMA_DIR,
+        embedding_function=get_embeddings()
     )
 
-   retriever = vectorstore.as_retriever(
+
+# ─────────────────────────────────────────────
+# RAG Chain
+# ─────────────────────────────────────────────
+def build_rag_chain(vectorstore):
+
+    llm = ChatGroq(
+        model="llama-3.3-70b-versatile",
+        api_key=os.getenv("GROQ_API_KEY"),
+        temperature=0.3
+    )
+
+    retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={"k": 5, "fetch_k": 10}
     )
 
-   prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are a helpful assistant that answers questions based on the provided documents.
-Use the following retrieved context to answer the question. If you don't know the answer from the context, say so.
-Always be concise and accurate.
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", """
+You are a helpful assistant that answers questions based ONLY on the provided context.
+
+If the answer is not in the context, say you don't know.
 
 Context:
-{context}"""),
+{context}
+        """),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{question}")
     ])
 
-   def format_docs(docs):
+    def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
-   chain = (
+    chain = (
         RunnablePassthrough.assign(
-            context=lambda x: format_docs(retriever.invoke(x["question"])),
+            context=lambda x: format_docs(retriever.invoke(x["question"]))
         )
         | prompt
         | llm
         | StrOutputParser()
     )
 
-   return chain, retriever
+    return chain, retriever
