@@ -15,6 +15,7 @@ Document understanding systems
 Semantic search using embeddings
 LLM-based reasoning (Groq / LLaMA3)
 Scalable vector databases
+
 ✨ Key Features
 📂 Upload multiple documents (PDF, DOCX, TXT, MD)
 🧠 Context-aware Q&A using RAG pipeline
@@ -23,7 +24,17 @@ Scalable vector databases
 ⚡ Fast inference using Groq API
 🗂 Persistent vector storage using ChromaDB
 🎯 Multi-document semantic search
+
 🏗️ System Architecture
+```mermaid
+flowchart LR
+U[User] --> UI[Streamlit UI]
+UI --> R[Retriever]
+R --> V[ChromaDB Vector Store]
+V --> L[LLM - LLaMA3]
+L --> A[Answer + Citations]
+```
+
 🧰 Tech Stack
 🧠 AI / ML
 LangChain
@@ -40,18 +51,20 @@ AWS EC2 (Ubuntu)
 GitHub
 
 
-📁 Project Structure
+## 📁 Project Structure
+
+```text
 MULTI-DOC-RAG/
 │
-├── app.py                 # Streamlit frontend
-├── rag_engine.py          # RAG pipeline logic
-├── utils.py               # Helper functions
-├── requirements.txt       # Dependencies
-├── .env                   # API keys (not pushed)
+├── app.py                 # Streamlit frontend (UI)
+├── rag_engine.py          # Core RAG pipeline (retrieval + LLM logic)
+├── utils.py               # Helper functions (file handling, formatting)
+├── requirements.txt       # Python dependencies
+├── .env                   # API keys (NOT pushed to GitHub)
 │
-├── chroma_store/          # Vector DB (ignored in git)
-└── README.md
-
+├── chroma_store/          # Persistent vector database (ignored in git)
+└── README.md              # Project documentation
+```
 
 ⚙️ How It Works
 User uploads documents
