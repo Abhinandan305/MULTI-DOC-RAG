@@ -32,40 +32,14 @@ Streamlit UI
 🧾 Supports PDF, DOCX, TXT, MD
 
 
-🏗️ System Architecture
-                ┌────────────────────┐
-                │  User Upload Docs  │
-                └─────────┬──────────┘
-                          │
-                          ▼
-             ┌──────────────────────────┐
-             │ Document Loader (LangChain)
-             └─────────┬──────────────┘
-                       │
-                       ▼
-             ┌──────────────────────────┐
-             │ Text Chunking & Splitting│
-             └─────────┬──────────────┘
-                       │
-                       ▼
-             ┌──────────────────────────┐
-             │ Embeddings (Groq / HF)   │
-             └─────────┬──────────────┘
-                       │
-                       ▼
-             ┌──────────────────────────┐
-             │   Chroma Vector Store     │
-             └─────────┬──────────────┘
-                       │
-        ┌──────────────┴──────────────┐
-        ▼                             ▼
-User Query                    Retriever (Top-K)
-        ▼                             ▼
-        └──────────► LLM (LLaMA3) ◄───┘
-                       │
-                       ▼
-               Final Answer + Sources
-               
+```mermaid
+graph TD;
+A[User Upload Docs] --> B[LangChain Loader];
+B --> C[Chunking];
+C --> D[Embeddings];
+D --> E[ChromaDB];
+E --> F[Retriever];
+F --> G[LLM Response];
 
 🖥️ Tech Stack
 🧠 AI / ML
