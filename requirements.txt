@@ -4,7 +4,6 @@ langchain-core
 langchain-community
 langchain-huggingface
 langchain-groq
-langchain-google-genai
 chromadb==0.4.24
 sentence-transformers
 pypdf
@@ -13,4 +12,4 @@ python-dotenv
 groq
 tiktoken
 faiss-cpu
-protobuf<5
+protobuf==4.25.3
