@@ -111,9 +111,8 @@ venv\Scripts\activate      # Windows
 pip install -r requirements.txt
 
 4️⃣ Setup environment variables
-
 Create .env file:
-
 GROQ_API_KEY=your_api_key_here
+
 5️⃣ Run application
 streamlit run app.py
