@@ -3,6 +3,7 @@ langchain
 langchain-core
 langchain-community
 langchain-huggingface
+langchain-groq
 chromadb
 sentence-transformers
 pypdf
@@ -10,3 +11,4 @@ python-docx
 python-dotenv
 groq
 tiktoken
+faiss-cpu
