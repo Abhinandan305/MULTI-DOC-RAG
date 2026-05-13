@@ -31,6 +31,7 @@ Streamlit UI
 🎨 Clean dark-themed UI
 🧾 Supports PDF, DOCX, TXT, MD
 
+
 🏗️ System Architecture
                 ┌────────────────────┐
                 │  User Upload Docs  │
@@ -65,6 +66,7 @@ User Query                    Retriever (Top-K)
                        ▼
                Final Answer + Sources
                
+
 🖥️ Tech Stack
 🧠 AI / ML
 LangChain
