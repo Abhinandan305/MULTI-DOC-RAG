@@ -78,6 +78,7 @@ Sources are displayed for transparency
 
 
 💻 Run Locally
+
 1️⃣ Clone Repository
 git clone https://github.com/your-username/MULTI-DOC-RAG.git
 cd MULTI-DOC-RAG
