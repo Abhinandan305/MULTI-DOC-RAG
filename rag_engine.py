@@ -19,13 +19,16 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
+import chromadb
+
 load_dotenv()
 
 CHROMA_DIR = "./chroma_store"
+COLLECTION_NAME = "rag_collection"
 
 
 # ─────────────────────────────────────────────
-# Embeddings (stable + free)
+# Embeddings
 # ─────────────────────────────────────────────
 def get_embeddings():
     return HuggingFaceEmbeddings(
@@ -59,7 +62,7 @@ def load_document(file_path: str, source_name: str) -> list[Document]:
 
 
 # ─────────────────────────────────────────────
-# Vector Store (FIXED - NO from_documents)
+# Vector Store (FIXED FOR STREAMLIT CLOUD)
 # ─────────────────────────────────────────────
 def build_vectorstore(documents: list[Document]):
     splitter = RecursiveCharacterTextSplitter(
@@ -69,35 +72,58 @@ def build_vectorstore(documents: list[Document]):
 
     chunks = splitter.split_documents(documents)
 
+    texts = [d.page_content for d in chunks]
+    metadatas = [d.metadata for d in chunks]
+
     embeddings = get_embeddings()
 
-    texts = [doc.page_content for doc in chunks]
-    metadatas = [doc.metadata for doc in chunks]
+    # ✅ SAFE CHROMA CLIENT (fixes tenant error)
+    client = chromadb.PersistentClient(path=CHROMA_DIR)
 
-    vectorstore = Chroma(
-        collection_name="rag_collection",
-        embedding_function=embeddings,
-        persist_directory=CHROMA_DIR
+    collection = client.get_or_create_collection(
+        name=COLLECTION_NAME
     )
 
-    vectorstore.add_texts(
-        texts=texts,
-        metadatas=metadatas
+    # embed documents
+    embeddings_list = embeddings.embed_documents(texts)
+
+    # clear old data (important for re-indexing)
+    try:
+        collection.delete()
+    except:
+        pass
+
+    collection = client.get_or_create_collection(
+        name=COLLECTION_NAME
     )
 
-    return vectorstore
+    collection.add(
+        documents=texts,
+        embeddings=embeddings_list,
+        metadatas=metadatas,
+        ids=[str(i) for i in range(len(texts))]
+    )
+
+    # wrap for LangChain retrieval
+    return Chroma(
+        client=client,
+        collection_name=COLLECTION_NAME,
+        embedding_function=embeddings
+    )
 
 
 # ─────────────────────────────────────────────
-# Load existing vector store
+# Load Existing Vector Store
 # ─────────────────────────────────────────────
 def load_existing_vectorstore():
     if not Path(CHROMA_DIR).exists():
         return None
 
+    client = chromadb.PersistentClient(path=CHROMA_DIR)
+
     return Chroma(
-        collection_name="rag_collection",
-        persist_directory=CHROMA_DIR,
+        client=client,
+        collection_name=COLLECTION_NAME,
         embedding_function=get_embeddings()
     )
 
@@ -120,9 +146,9 @@ def build_rag_chain(vectorstore):
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", """
-You are a helpful assistant that answers questions strictly based on the provided context.
+You are a helpful assistant that answers strictly based on the provided context.
 
-If the answer is not present in the context, say you don't know.
+If the answer is not in the context, say you don't know.
 
 Context:
 {context}
@@ -132,7 +158,7 @@ Context:
     ])
 
     def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
+        return "\n\n".join(d.page_content for d in docs)
 
     chain = (
         RunnablePassthrough.assign(
