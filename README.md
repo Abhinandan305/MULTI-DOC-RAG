@@ -1,92 +1,83 @@
-🧠 MULTI-DOC-RAG: Intelligent Multi-Document Chat Assistant
+🧠 MULTI-DOC-RAG — AI-Powered Document Intelligence System
 
-🚀 Live Project 
+🚀 Live Demo
 
-📌 Overview
 
-MULTI-DOC-RAG is an AI-powered Retrieval-Augmented Generation (RAG) system that allows users to upload multiple documents (PDF, DOCX, TXT, MD) and interact with them using natural language.
+📌 Project Overview
 
-It enables users to:
+MULTI-DOC-RAG is an AI-powered Retrieval-Augmented Generation (RAG) system that allows users to upload multiple documents and interact with them using natural language queries.
 
-Upload multiple documents
-Ask context-aware questions
-Get grounded answers from relevant documents only
-View source references for transparency
+It intelligently retrieves relevant context from documents and generates accurate, grounded responses using LLMs.
 
-This project demonstrates real-world use of:
+This project demonstrates real-world implementation of:
 
-LLMs (Groq / LLaMA3)
-Vector databases (ChromaDB)
-Embeddings
-LangChain RAG pipelines
-
-Streamlit UI
-⚙️ Features
-📂 Multi-document upload support
-🧠 Context-aware question answering (RAG)
-🔎 Source tracking with document citations
-💬 Chat-style interface
+Document understanding systems
+Semantic search using embeddings
+LLM-based reasoning (Groq / LLaMA3)
+Scalable vector databases
+✨ Key Features
+📂 Upload multiple documents (PDF, DOCX, TXT, MD)
+🧠 Context-aware Q&A using RAG pipeline
+🔎 Source attribution (trace answers back to documents)
+💬 Chat-style conversational interface
 ⚡ Fast inference using Groq API
 🗂 Persistent vector storage using ChromaDB
-🎨 Clean dark-themed UI
-🧾 Supports PDF, DOCX, TXT, MD
-
-
-```mermaid
-graph TD;
-A[User Upload Docs] --> B[LangChain Loader];
-B --> C[Chunking];
-C --> D[Embeddings];
-D --> E[ChromaDB];
-E --> F[Retriever];
-F --> G[LLM Response];
-
-🖥️ Tech Stack
+🎯 Multi-document semantic search
+🏗️ System Architecture
+🧰 Tech Stack
 🧠 AI / ML
 LangChain
 Groq API (LLaMA3)
 HuggingFace Embeddings
-ChromaDB (Vector Database)
+ChromaDB (Vector Store)
 
-🌐 Backend / App
+🌐 Backend / UI
 Python 3.10+
 Streamlit
-FastAPI (optional backend layer)
 
 ☁️ Deployment
 AWS EC2 (Ubuntu)
-Nginx (optional reverse proxy)
 GitHub
+
 
 📁 Project Structure
 MULTI-DOC-RAG/
 │
 ├── app.py                 # Streamlit frontend
-├── rag_engine.py         # RAG pipeline logic
-├── utils.py              # Helper functions
-├── requirements.txt      # Dependencies
-├── .env                  # API keys (not pushed)
+├── rag_engine.py          # RAG pipeline logic
+├── utils.py               # Helper functions
+├── requirements.txt       # Dependencies
+├── .env                   # API keys (not pushed)
 │
-├── chroma_store/         # Vector DB (ignored in git)
+├── chroma_store/          # Vector DB (ignored in git)
 └── README.md
 
-🚀 How to Run Locally
 
-1️⃣ Clone repo
+⚙️ How It Works
+User uploads documents
+Documents are loaded & chunked
+Embeddings are generated
+Stored in ChromaDB
+User asks a question
+Retriever fetches relevant chunks
+LLM generates grounded response
+Sources are displayed for transparency
+
+
+💻 Run Locally
+1️⃣ Clone Repository
 git clone https://github.com/your-username/MULTI-DOC-RAG.git
 cd MULTI-DOC-RAG
-
-2️⃣ Create virtual environment
+2️⃣ Create Virtual Environment
 python -m venv venv
 source venv/bin/activate   # Mac/Linux
 venv\Scripts\activate      # Windows
-
-3️⃣ Install dependencies
+3️⃣ Install Dependencies
 pip install -r requirements.txt
+4️⃣ Setup Environment Variables
 
-4️⃣ Setup environment variables
 Create .env file:
-GROQ_API_KEY=your_api_key_here
 
-5️⃣ Run application
+GROQ_API_KEY=your_api_key_here
+5️⃣ Run Application
 streamlit run app.py
