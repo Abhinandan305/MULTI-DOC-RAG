@@ -3,7 +3,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
-from langchain_google_genai import ChatGoogleGenerativeAI
 
 from langchain_community.document_loaders import (
     PyPDFLoader,
@@ -37,7 +36,7 @@ def get_embeddings():
 
 
 # ─────────────────────────────────────────────
-# Document loader
+# Document Loader
 # ─────────────────────────────────────────────
 def load_document(file_path: str, source_name: str) -> list[Document]:
     ext = Path(file_path).suffix.lower()
@@ -60,7 +59,7 @@ def load_document(file_path: str, source_name: str) -> list[Document]:
 
 
 # ─────────────────────────────────────────────
-# Vector store (FIXED)
+# Vector Store (FIXED - NO from_documents)
 # ─────────────────────────────────────────────
 def build_vectorstore(documents: list[Document]):
     splitter = RecursiveCharacterTextSplitter(
@@ -72,23 +71,32 @@ def build_vectorstore(documents: list[Document]):
 
     embeddings = get_embeddings()
 
-    vectorstore = Chroma.from_documents(
-        documents=chunks,
-        embedding_function=embeddings,   # ✅ FIXED (IMPORTANT)
+    texts = [doc.page_content for doc in chunks]
+    metadatas = [doc.metadata for doc in chunks]
+
+    vectorstore = Chroma(
+        collection_name="rag_collection",
+        embedding_function=embeddings,
         persist_directory=CHROMA_DIR
+    )
+
+    vectorstore.add_texts(
+        texts=texts,
+        metadatas=metadatas
     )
 
     return vectorstore
 
 
 # ─────────────────────────────────────────────
-# Load existing DB
+# Load existing vector store
 # ─────────────────────────────────────────────
 def load_existing_vectorstore():
     if not Path(CHROMA_DIR).exists():
         return None
 
     return Chroma(
+        collection_name="rag_collection",
         persist_directory=CHROMA_DIR,
         embedding_function=get_embeddings()
     )
@@ -112,9 +120,9 @@ def build_rag_chain(vectorstore):
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", """
-You are a helpful assistant that answers questions based ONLY on the provided context.
+You are a helpful assistant that answers questions strictly based on the provided context.
 
-If the answer is not in the context, say you don't know.
+If the answer is not present in the context, say you don't know.
 
 Context:
 {context}
